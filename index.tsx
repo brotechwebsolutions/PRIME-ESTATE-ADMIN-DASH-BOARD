@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 
 // --- Configuration ---
-const API_BASE_URL = 'http://localhost:5000/api/flats';
+const API = "https://prime-estates-api.onrender.com/api/flats";
 
 // --- Types ---
 enum FlatStatus {
@@ -219,11 +219,11 @@ const App = () => {
   const fetchFlats = useCallback(async () => {
     setLoading(true);
     try {
-      const { data } = await axios.get(API_BASE_URL);
+      const { data } = await axios.get(API);
       setFlats(Array.isArray(data) ? data : []);
       setError(null);
     } catch (err) {
-      setError("Cannot reach backend server at http://localhost:5000");
+      setError("Cannot reach backend server at https://prime-estates-api.onrender.com");
     } finally {
       setLoading(false);
     }
@@ -235,7 +235,7 @@ const App = () => {
 
   const handleAddFlat = async (newFlat: Flat) => {
     try {
-      await axios.post(API_BASE_URL, newFlat);
+      await axios.post(API, newFlat);
       await fetchFlats();
     } catch (err) {
       alert("Error adding flat. Check backend.");
@@ -245,7 +245,7 @@ const App = () => {
   const handleDeleteFlat = async (id: string) => {
     if (!window.confirm("Delete this listing?")) return;
     try {
-      await axios.delete(`${API_BASE_URL}/${id}`);
+      await axios.delete(`${API}/${id}`);
       await fetchFlats();
     } catch (err) {
       alert("Delete failed.");
@@ -257,7 +257,7 @@ const App = () => {
     if (!id) return;
     const nextStatus = flat.status === FlatStatus.AVAILABLE ? FlatStatus.SOLD : FlatStatus.AVAILABLE;
     try {
-      await axios.put(`${API_BASE_URL}/${id}`, { ...flat, status: nextStatus });
+      await axios.put(`${API}/${id}`, { ...flat, status: nextStatus });
       await fetchFlats();
     } catch (err) {
       alert("Update failed.");
