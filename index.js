@@ -7,7 +7,8 @@ import {
 } from 'lucide-react';
 
 const h = React.createElement;
-const API = "http://localhost:5000/api/flats";
+// Production API URL on Render
+const API = "https://prime-estates-api.onrender.com/api/flats";
 
 const FlatStatus = {
   AVAILABLE: 'Available',
@@ -15,9 +16,9 @@ const FlatStatus = {
 };
 
 const MOCK_DATA = [
-  { id: '1', flatNo: '101', type: '2BHK Luxury', price: 150000, status: FlatStatus.AVAILABLE, image: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=600&h=400' },
-  { id: '2', flatNo: '204', type: '3BHK Penthouse', price: 320000, status: FlatStatus.SOLD, image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=600&h=400' },
-  { id: '3', flatNo: '405', type: 'Studio Suite', price: 95000, status: FlatStatus.AVAILABLE, image: 'https://images.unsplash.com/photo-1493809842364-78817add7ffb?auto=format&fit=crop&w=600&h=400' }
+  { id: 'demo-1', flatNo: '101', type: '2BHK Luxury', price: 150000, status: FlatStatus.AVAILABLE, image: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=600&h=400' },
+  { id: 'demo-2', flatNo: '204', type: '3BHK Penthouse', price: 320000, status: FlatStatus.SOLD, image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=600&h=400' },
+  { id: 'demo-3', flatNo: '405', type: 'Studio Suite', price: 95000, status: FlatStatus.AVAILABLE, image: 'https://images.unsplash.com/photo-1493809842364-78817add7ffb?auto=format&fit=crop&w=600&h=400' }
 ];
 
 const Header = ({ onRefresh, loading, searchTerm, onSearchChange, demoMode }) => {
@@ -48,9 +49,9 @@ const Header = ({ onRefresh, loading, searchTerm, onSearchChange, demoMode }) =>
       h('button', {
         onClick: onRefresh,
         disabled: loading,
-        className: "p-3 text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"
+        className: "p-3 text-slate-600 hover:bg-slate-100 rounded-xl transition-colors active:scale-90"
       },
-        h(RefreshCw, { size: 22, className: loading ? 'animate-spin' : '' })
+        h(RefreshCw, { size: 22, className: loading ? 'animate-spin text-blue-600' : '' })
       )
     )
   );
@@ -100,7 +101,7 @@ const FlatForm = ({ onAdd }) => {
         h('input', { className: "w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 ring-blue-500", placeholder: "https://images.unsplash.com/...", value: String(formData.image), onChange: e => setFormData({ ...formData, image: e.target.value }) })
       ),
       h('div', { className: "lg:col-span-3 flex justify-end" },
-        h('button', { type: "submit", disabled: submitting, className: "w-full lg:w-auto px-10 py-4 bg-blue-600 text-white font-bold rounded-2xl hover:bg-blue-700 transition-all flex items-center justify-center gap-3 disabled:opacity-50" },
+        h('button', { type: "submit", disabled: submitting, className: "w-full lg:w-auto px-10 py-4 bg-blue-600 text-white font-bold rounded-2xl hover:bg-blue-700 transition-all flex items-center justify-center gap-3 disabled:opacity-50 shadow-lg shadow-blue-100 active:scale-95" },
           submitting ? h(Loader2, { size: 20, className: "animate-spin" }) : h(PlusCircle, { size: 22 }),
           "Register Property"
         )
@@ -134,10 +135,10 @@ const FlatCard = ({ flat, onDelete, onUpdate }) => {
         )
       ),
       h('div', { className: "grid grid-cols-2 gap-3 pt-2" },
-        h('button', { onClick: () => onUpdate(flat), className: `flex items-center justify-center gap-2 py-3 rounded-xl font-bold transition-all text-sm shadow-sm ${isAvailable ? 'bg-slate-100 text-slate-700 hover:bg-slate-200' : 'bg-blue-600 text-white hover:bg-blue-700'}` },
+        h('button', { onClick: () => onUpdate(flat), className: `flex items-center justify-center gap-2 py-3 rounded-xl font-bold transition-all text-sm shadow-sm active:scale-95 ${isAvailable ? 'bg-slate-100 text-slate-700 hover:bg-slate-200' : 'bg-blue-600 text-white hover:bg-blue-700'}` },
           h(RefreshCw, { size: 16 }), isAvailable ? 'Mark Sold' : 'Available'
         ),
-        h('button', { onClick: () => onDelete(id), className: "flex items-center justify-center gap-2 py-3 rounded-xl font-bold bg-red-50 text-red-600 hover:bg-red-100 text-sm shadow-sm" },
+        h('button', { onClick: () => onDelete(id), className: "flex items-center justify-center gap-2 py-3 rounded-xl font-bold bg-red-50 text-red-600 hover:bg-red-100 text-sm shadow-sm active:scale-95" },
           h(Trash2, { size: 16 }), " Delete"
         )
       )
@@ -156,13 +157,15 @@ const App = () => {
     if (demoMode && !isManual) return;
     setLoading(true);
     try {
-      const { data } = await axios.get(API);
+      // Free tier Render services sleep. We use a 15s timeout to allow for wake-up time.
+      const { data } = await axios.get(API, { timeout: 15000 });
       setFlats(Array.isArray(data) ? data : []);
       setError(null);
       setDemoMode(false);
     } catch (err) {
-      if (demoMode) { setError(null); } 
-      else { setError(`Could not connect to backend at ${API}.`); }
+      if (!demoMode) {
+        setError(`The live API at Render is likely sleeping. Free-tier servers take 50-60 seconds to start up.`);
+      }
     } finally { setLoading(false); }
   }, [demoMode]);
 
@@ -177,7 +180,7 @@ const App = () => {
 
   const handleAddFlat = async (newFlat) => {
     if (demoMode) {
-      setFlats(prev => [...prev, { ...newFlat, id: Date.now().toString() }]);
+      setFlats(prev => [...prev, { ...newFlat, id: 'demo-' + Date.now().toString() }]);
       return;
     }
     try { await axios.post(API, newFlat); await fetchFlats(); } 
@@ -215,12 +218,12 @@ const App = () => {
   return h('div', { className: "min-h-screen bg-slate-50 flex flex-col pb-20" },
     h(Header, { onRefresh: () => fetchFlats(true), loading, searchTerm, onSearchChange: setSearchTerm, demoMode }),
     h('main', { className: "max-w-7xl w-full mx-auto px-4 pt-8" },
-      demoMode && h('div', { className: "bg-orange-50 border border-orange-100 p-4 rounded-2xl mb-8 flex items-center justify-between" },
+      demoMode && h('div', { className: "bg-orange-50 border border-orange-100 p-4 rounded-2xl mb-8 flex items-center justify-between shadow-sm" },
         h('div', { className: "flex items-center gap-3 text-orange-800" },
           h(Info, { size: 20 }),
-          h('p', { className: "text-sm font-medium" }, "Running in Demo Mode. Changes are local and will reset on refresh.")
+          h('p', { className: "text-sm font-medium" }, "Running in Demo Mode. Your changes are local only.")
         ),
-        h('button', { onClick: () => window.location.reload(), className: "text-xs font-bold text-orange-600 hover:underline" }, "Try Reconnecting")
+        h('button', { onClick: () => window.location.reload(), className: "text-xs font-bold text-orange-600 hover:underline" }, "Try Reconnect")
       ),
       h('div', { className: "grid grid-cols-1 md:grid-cols-3 gap-6 mb-10" },
         h('div', { className: "bg-blue-600 rounded-3xl p-8 text-white shadow-xl shadow-blue-200" },
@@ -240,13 +243,13 @@ const App = () => {
       loading && flats.length === 0 ? 
         h('div', { className: "py-24 text-center" }, h(Loader2, { size: 56, className: "animate-spin text-blue-600 mx-auto" })) : 
         error ? 
-        h('div', { className: "bg-red-50 p-12 rounded-[2rem] text-center border border-red-100 max-w-2xl mx-auto shadow-sm" }, 
-          h(AlertCircle, { size: 32, className: "text-red-600 mx-auto mb-4" }), 
-          h('p', { className: "text-red-700 font-bold mb-2" }, "Backend Offline"),
-          h('p', { className: "text-red-600 text-sm opacity-80 mb-6" }, String(error)),
+        h('div', { className: "bg-white p-12 rounded-[2rem] text-center border border-slate-200 max-w-2xl mx-auto shadow-sm" }, 
+          h(AlertCircle, { size: 48, className: "text-orange-500 mx-auto mb-4" }), 
+          h('p', { className: "text-slate-800 font-bold text-xl mb-2" }, "API Is Waking Up"),
+          h('p', { className: "text-slate-500 text-sm mb-8 leading-relaxed" }, String(error)),
           h('div', { className: "flex flex-col sm:flex-row gap-4 justify-center" },
-            h('button', { onClick: () => fetchFlats(true), className: "px-6 py-3 bg-red-600 text-white rounded-xl font-bold shadow-md" }, "Retry Connection"),
-            h('button', { onClick: enableDemoMode, className: "px-6 py-3 bg-white text-slate-700 border border-slate-200 rounded-xl font-bold shadow-sm" }, "Enter Demo Mode")
+            h('button', { onClick: () => fetchFlats(true), className: "px-8 py-3 bg-blue-600 text-white rounded-xl font-bold shadow-lg shadow-blue-100 hover:bg-blue-700 transition-all active:scale-95" }, "Retry Connection"),
+            h('button', { onClick: enableDemoMode, className: "px-8 py-3 bg-slate-50 text-slate-700 border border-slate-200 rounded-xl font-bold hover:bg-slate-100 transition-all active:scale-95" }, "Explore Demo Mode")
           )
         ) : 
         h('div', { className: "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" }, 
