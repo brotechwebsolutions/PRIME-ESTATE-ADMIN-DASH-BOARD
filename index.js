@@ -3,10 +3,9 @@ import { createRoot } from 'react-dom/client';
 import axios from 'axios';
 import { 
   Building2, PlusCircle, Trash2, RefreshCw, 
-  Search, Loader2, AlertCircle, Layout, Hash, Banknote, Image as ImageIcon, Tag, DollarSign
+  Search, Loader2, AlertCircle, Layout, Hash, Banknote, Image as ImageIcon, Tag
 } from 'lucide-react';
 
-// Create shortcut for React.createElement
 const h = React.createElement;
 
 const API = "http://localhost:5000/api/flats";
@@ -34,7 +33,7 @@ const Header = ({ onRefresh, loading, searchTerm, onSearchChange }) => {
           type: "text",
           placeholder: "Search properties...",
           className: "bg-transparent outline-none w-full font-medium text-slate-700 placeholder-slate-400",
-          value: searchTerm,
+          value: String(searchTerm || ''),
           onChange: e => onSearchChange(e.target.value)
         })
       ),
@@ -76,15 +75,15 @@ const FlatForm = ({ onAdd }) => {
     h('form', { onSubmit: handleSubmit, className: "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" },
       h('div', { className: "space-y-2" },
         h('label', { className: "text-sm font-semibold text-slate-600 flex items-center gap-2" }, h(Hash, { size: 16 }), " Flat Number"),
-        h('input', { required: true, className: "w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 ring-blue-500 transition-all", placeholder: "e.g. A-101", value: formData.flatNo, onChange: e => setFormData({ ...formData, flatNo: e.target.value }) })
+        h('input', { required: true, className: "w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 ring-blue-500 transition-all", placeholder: "e.g. A-101", value: String(formData.flatNo), onChange: e => setFormData({ ...formData, flatNo: e.target.value }) })
       ),
       h('div', { className: "space-y-2" },
         h('label', { className: "text-sm font-semibold text-slate-600 flex items-center gap-2" }, h(Layout, { size: 16 }), " Type"),
-        h('input', { required: true, className: "w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 ring-blue-500 transition-all", placeholder: "e.g. 3BHK Apartment", value: formData.type, onChange: e => setFormData({ ...formData, type: e.target.value }) })
+        h('input', { required: true, className: "w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 ring-blue-500 transition-all", placeholder: "e.g. 3BHK Apartment", value: String(formData.type), onChange: e => setFormData({ ...formData, type: e.target.value }) })
       ),
       h('div', { className: "space-y-2" },
         h('label', { className: "text-sm font-semibold text-slate-600 flex items-center gap-2" }, h(Banknote, { size: 16 }), " Price (USD)"),
-        h('input', { required: true, type: "number", className: "w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 ring-blue-500 transition-all", placeholder: "e.g. 250000", value: formData.price, onChange: e => setFormData({ ...formData, price: e.target.value }) })
+        h('input', { required: true, type: "number", className: "w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 ring-blue-500 transition-all", placeholder: "e.g. 250000", value: String(formData.price), onChange: e => setFormData({ ...formData, price: e.target.value }) })
       ),
       h('div', { className: "space-y-2" },
         h('label', { className: "text-sm font-semibold text-slate-600" }, "Status"),
@@ -95,7 +94,7 @@ const FlatForm = ({ onAdd }) => {
       ),
       h('div', { className: "md:col-span-2 space-y-2" },
         h('label', { className: "text-sm font-semibold text-slate-600 flex items-center gap-2" }, h(ImageIcon, { size: 16 }), " Image URL"),
-        h('input', { className: "w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 ring-blue-500 transition-all", placeholder: "https://images.unsplash.com/...", value: formData.image, onChange: e => setFormData({ ...formData, image: e.target.value }) })
+        h('input', { className: "w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 ring-blue-500 transition-all", placeholder: "https://images.unsplash.com/...", value: String(formData.image), onChange: e => setFormData({ ...formData, image: e.target.value }) })
       ),
       h('div', { className: "lg:col-span-3 flex justify-end" },
         h('button', { type: "submit", disabled: submitting, className: "w-full lg:w-auto px-10 py-4 bg-blue-600 text-white font-bold rounded-2xl hover:bg-blue-700 transition-all flex items-center justify-center gap-3 disabled:opacity-50 active:scale-95 shadow-lg shadow-blue-100" },
@@ -109,26 +108,26 @@ const FlatForm = ({ onAdd }) => {
 
 const FlatCard = ({ flat, onDelete, onUpdate }) => {
   const isAvailable = flat.status === FlatStatus.AVAILABLE;
-  const id = flat._id || flat.id || '';
+  const id = String(flat._id || flat.id || '');
   return h('div', { className: "bg-white rounded-2xl overflow-hidden border border-slate-200 hover:shadow-lg transition-all duration-300 group" },
     h('div', { className: "relative h-56 overflow-hidden bg-slate-100" },
       h('img', {
         src: flat.image || `https://picsum.photos/seed/${flat.flatNo}/600/400`,
         className: "w-full h-full object-cover transition-transform duration-500 group-hover:scale-105",
-        alt: flat.flatNo,
+        alt: String(flat.flatNo || 'Unit'),
         onError: (e) => { e.currentTarget.src = 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?q=80&w=600&h=400&auto=format&fit=crop'; }
       }),
-      h('div', { className: `absolute top-4 right-4 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm ${isAvailable ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}` }, flat.status)
+      h('div', { className: `absolute top-4 right-4 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm ${isAvailable ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}` }, String(flat.status))
     ),
     h('div', { className: "p-6" },
       h('div', { className: "flex justify-between items-start mb-4" },
         h('div', { className: "flex-1 min-w-0" },
-          h('h3', { className: "text-xl font-bold text-slate-800 leading-tight truncate" }, `Unit ${flat.flatNo}`),
-          h('p', { className: "text-slate-500 font-medium flex items-center gap-1.5 mt-1" }, h(Tag, { size: 14, className: "text-blue-500" }), flat.type)
+          h('h3', { className: "text-xl font-bold text-slate-800 leading-tight truncate" }, `Unit ${String(flat.flatNo || '')}`),
+          h('p', { className: "text-slate-500 font-medium flex items-center gap-1.5 mt-1" }, h(Tag, { size: 14, className: "text-blue-500" }), String(flat.type || ''))
         ),
         h('span', { className: "text-2xl font-black text-blue-700 flex items-center ml-2" },
           h('span', { className: "text-sm mr-0.5" }, "$"),
-          Number(flat.price).toLocaleString()
+          Number(flat.price || 0).toLocaleString()
         )
       ),
       h('div', { className: "grid grid-cols-2 gap-3 pt-2" },
@@ -156,7 +155,7 @@ const App = () => {
       setFlats(Array.isArray(data) ? data : []);
       setError(null);
     } catch (err) {
-      setError(`Backend error. Ensure server is running at ${API}`);
+      setError(`Backend connection failed. Please ensure your server is running at ${API}`);
     } finally {
       setLoading(false);
     }
@@ -165,12 +164,12 @@ const App = () => {
   useEffect(() => { fetchFlats(); }, [fetchFlats]);
 
   const handleAddFlat = async (newFlat) => {
-    try { await axios.post(API, newFlat); await fetchFlats(); } catch (err) { alert("Error adding flat."); }
+    try { await axios.post(API, newFlat); await fetchFlats(); } catch (err) { alert("Error adding flat record."); }
   };
 
   const handleDeleteFlat = async (id) => {
-    if (!window.confirm("Are you sure?")) return;
-    try { await axios.delete(`${API}/${id}`); await fetchFlats(); } catch (err) { alert("Delete failed."); }
+    if (!window.confirm("Delete this listing permanently?")) return;
+    try { await axios.delete(`${API}/${id}`); await fetchFlats(); } catch (err) { alert("Action failed."); }
   };
 
   const handleUpdateStatus = async (flat) => {
@@ -181,8 +180,8 @@ const App = () => {
 
   const filteredFlats = useMemo(() => {
     return flats.filter(f => 
-      f.flatNo?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-      f.type?.toLowerCase().includes(searchTerm.toLowerCase())
+      String(f.flatNo || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
+      String(f.type || '').toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [flats, searchTerm]);
 
@@ -213,9 +212,9 @@ const App = () => {
       loading && flats.length === 0 ? 
         h('div', { className: "py-24 text-center" }, h(Loader2, { size: 56, className: "animate-spin text-blue-600 mx-auto" })) : 
         error ? 
-        h('div', { className: "bg-red-50 p-12 rounded-[2rem] text-center border border-red-100 max-w-2xl mx-auto" }, h(AlertCircle, { size: 32, className: "text-red-600 mx-auto mb-4" }), h('p', { className: "text-red-700 font-bold" }, error)) : 
+        h('div', { className: "bg-red-50 p-12 rounded-[2rem] text-center border border-red-100 max-w-2xl mx-auto" }, h(AlertCircle, { size: 32, className: "text-red-600 mx-auto mb-4" }), h('p', { className: "text-red-700 font-bold" }, String(error))) : 
         h('div', { className: "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" }, 
-          filteredFlats.map(flat => h(FlatCard, { key: flat._id || flat.id, flat, onDelete: handleDeleteFlat, onUpdate: handleUpdateStatus }))
+          filteredFlats.map(flat => h(FlatCard, { key: String(flat._id || flat.id), flat, onDelete: handleDeleteFlat, onUpdate: handleUpdateStatus }))
         )
     ),
     h('footer', { className: "mt-auto py-12 text-center" }, 
