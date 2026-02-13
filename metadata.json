@@ -1,0 +1,5 @@
+{
+  "name": "Prime Estates Admin Dashboard",
+  "description": "A professional real estate management portal for tracking and managing property listings, including price updates, status changes, and deletion of flat records.",
+  "requestFramePermissions": []
+}
