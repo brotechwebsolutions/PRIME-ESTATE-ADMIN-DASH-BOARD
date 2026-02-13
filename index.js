@@ -3,11 +3,10 @@ import { createRoot } from 'react-dom/client';
 import axios from 'axios';
 import { 
   Building2, PlusCircle, Trash2, RefreshCw, 
-  Search, Loader2, AlertCircle, Layout, Hash, Banknote, Image as ImageIcon, Tag
+  Search, Loader2, AlertCircle, Layout, Hash, Banknote, Image as ImageIcon, Tag, Info
 } from 'lucide-react';
 
 const h = React.createElement;
-
 const API = "http://localhost:5000/api/flats";
 
 const FlatStatus = {
@@ -15,7 +14,13 @@ const FlatStatus = {
   SOLD: 'Sold'
 };
 
-const Header = ({ onRefresh, loading, searchTerm, onSearchChange }) => {
+const MOCK_DATA = [
+  { id: '1', flatNo: '101', type: '2BHK Luxury', price: 150000, status: FlatStatus.AVAILABLE, image: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=600&h=400' },
+  { id: '2', flatNo: '204', type: '3BHK Penthouse', price: 320000, status: FlatStatus.SOLD, image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=600&h=400' },
+  { id: '3', flatNo: '405', type: 'Studio Suite', price: 95000, status: FlatStatus.AVAILABLE, image: 'https://images.unsplash.com/photo-1493809842364-78817add7ffb?auto=format&fit=crop&w=600&h=400' }
+];
+
+const Header = ({ onRefresh, loading, searchTerm, onSearchChange, demoMode }) => {
   return h('header', { className: "bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm" },
     h('div', { className: "max-w-7xl mx-auto px-4 h-20 flex items-center justify-between" },
       h('div', { className: "flex items-center gap-3" },
@@ -23,16 +28,19 @@ const Header = ({ onRefresh, loading, searchTerm, onSearchChange }) => {
           h(Building2, { className: "text-white", size: 28 })
         ),
         h('div', null,
-          h('h1', { className: "text-xl md:text-2xl font-black text-slate-800 tracking-tight leading-none" }, "PRIME ESTATES"),
+          h('div', { className: "flex items-center gap-2" },
+            h('h1', { className: "text-xl md:text-2xl font-black text-slate-800 tracking-tight leading-none" }, "PRIME ESTATES"),
+            demoMode && h('span', { className: "bg-orange-100 text-orange-700 text-[10px] font-black px-2 py-0.5 rounded-full border border-orange-200" }, "DEMO MODE")
+          ),
           h('p', { className: "text-[10px] font-bold text-blue-600 uppercase tracking-widest mt-1" }, "Admin Dashboard")
         )
       ),
-      h('div', { className: "hidden md:flex items-center gap-3 bg-slate-50 px-4 py-2 rounded-2xl border border-slate-200 w-80 shadow-inner focus-within:ring-2 ring-blue-100 transition-all" },
+      h('div', { className: "hidden md:flex items-center gap-3 bg-slate-50 px-4 py-2 rounded-2xl border border-slate-200 w-80 shadow-inner" },
         h(Search, { size: 18, className: "text-slate-400" }),
         h('input', {
           type: "text",
           placeholder: "Search properties...",
-          className: "bg-transparent outline-none w-full font-medium text-slate-700 placeholder-slate-400",
+          className: "bg-transparent outline-none w-full font-medium text-slate-700",
           value: String(searchTerm || ''),
           onChange: e => onSearchChange(e.target.value)
         })
@@ -40,8 +48,7 @@ const Header = ({ onRefresh, loading, searchTerm, onSearchChange }) => {
       h('button', {
         onClick: onRefresh,
         disabled: loading,
-        className: "p-3 text-slate-600 hover:bg-slate-100 rounded-xl transition-colors focus:outline-none focus:ring-2 focus:ring-blue-100",
-        "aria-label": "Refresh Data"
+        className: "p-3 text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"
       },
         h(RefreshCw, { size: 22, className: loading ? 'animate-spin' : '' })
       )
@@ -50,9 +57,7 @@ const Header = ({ onRefresh, loading, searchTerm, onSearchChange }) => {
 };
 
 const FlatForm = ({ onAdd }) => {
-  const [formData, setFormData] = useState({
-    flatNo: '', type: '', price: '', status: FlatStatus.AVAILABLE, image: ''
-  });
+  const [formData, setFormData] = useState({ flatNo: '', type: '', price: '', status: FlatStatus.AVAILABLE, image: '' });
   const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async (e) => {
@@ -62,9 +67,7 @@ const FlatForm = ({ onAdd }) => {
     try {
       await onAdd({ ...formData, price: Number(formData.price) });
       setFormData({ flatNo: '', type: '', price: '', status: FlatStatus.AVAILABLE, image: '' });
-    } finally {
-      setSubmitting(false);
-    }
+    } finally { setSubmitting(false); }
   };
 
   return h('section', { className: "bg-white rounded-3xl p-8 shadow-sm border border-slate-200 mb-10" },
@@ -75,15 +78,15 @@ const FlatForm = ({ onAdd }) => {
     h('form', { onSubmit: handleSubmit, className: "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" },
       h('div', { className: "space-y-2" },
         h('label', { className: "text-sm font-semibold text-slate-600 flex items-center gap-2" }, h(Hash, { size: 16 }), " Flat Number"),
-        h('input', { required: true, className: "w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 ring-blue-500 transition-all", placeholder: "e.g. A-101", value: String(formData.flatNo), onChange: e => setFormData({ ...formData, flatNo: e.target.value }) })
+        h('input', { required: true, className: "w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 ring-blue-500", placeholder: "e.g. A-101", value: String(formData.flatNo), onChange: e => setFormData({ ...formData, flatNo: e.target.value }) })
       ),
       h('div', { className: "space-y-2" },
         h('label', { className: "text-sm font-semibold text-slate-600 flex items-center gap-2" }, h(Layout, { size: 16 }), " Type"),
-        h('input', { required: true, className: "w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 ring-blue-500 transition-all", placeholder: "e.g. 3BHK Apartment", value: String(formData.type), onChange: e => setFormData({ ...formData, type: e.target.value }) })
+        h('input', { required: true, className: "w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 ring-blue-500", placeholder: "e.g. 3BHK Apartment", value: String(formData.type), onChange: e => setFormData({ ...formData, type: e.target.value }) })
       ),
       h('div', { className: "space-y-2" },
         h('label', { className: "text-sm font-semibold text-slate-600 flex items-center gap-2" }, h(Banknote, { size: 16 }), " Price (USD)"),
-        h('input', { required: true, type: "number", className: "w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 ring-blue-500 transition-all", placeholder: "e.g. 250000", value: String(formData.price), onChange: e => setFormData({ ...formData, price: e.target.value }) })
+        h('input', { required: true, type: "number", className: "w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 ring-blue-500", placeholder: "e.g. 250000", value: String(formData.price), onChange: e => setFormData({ ...formData, price: e.target.value }) })
       ),
       h('div', { className: "space-y-2" },
         h('label', { className: "text-sm font-semibold text-slate-600" }, "Status"),
@@ -94,10 +97,10 @@ const FlatForm = ({ onAdd }) => {
       ),
       h('div', { className: "md:col-span-2 space-y-2" },
         h('label', { className: "text-sm font-semibold text-slate-600 flex items-center gap-2" }, h(ImageIcon, { size: 16 }), " Image URL"),
-        h('input', { className: "w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 ring-blue-500 transition-all", placeholder: "https://images.unsplash.com/...", value: String(formData.image), onChange: e => setFormData({ ...formData, image: e.target.value }) })
+        h('input', { className: "w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 ring-blue-500", placeholder: "https://images.unsplash.com/...", value: String(formData.image), onChange: e => setFormData({ ...formData, image: e.target.value }) })
       ),
       h('div', { className: "lg:col-span-3 flex justify-end" },
-        h('button', { type: "submit", disabled: submitting, className: "w-full lg:w-auto px-10 py-4 bg-blue-600 text-white font-bold rounded-2xl hover:bg-blue-700 transition-all flex items-center justify-center gap-3 disabled:opacity-50 active:scale-95 shadow-lg shadow-blue-100" },
+        h('button', { type: "submit", disabled: submitting, className: "w-full lg:w-auto px-10 py-4 bg-blue-600 text-white font-bold rounded-2xl hover:bg-blue-700 transition-all flex items-center justify-center gap-3 disabled:opacity-50" },
           submitting ? h(Loader2, { size: 20, className: "animate-spin" }) : h(PlusCircle, { size: 22 }),
           "Register Property"
         )
@@ -109,7 +112,7 @@ const FlatForm = ({ onAdd }) => {
 const FlatCard = ({ flat, onDelete, onUpdate }) => {
   const isAvailable = flat.status === FlatStatus.AVAILABLE;
   const id = String(flat._id || flat.id || '');
-  return h('div', { className: "bg-white rounded-2xl overflow-hidden border border-slate-200 hover:shadow-lg transition-all duration-300 group" },
+  return h('div', { className: "bg-white rounded-2xl overflow-hidden border border-slate-200 hover:shadow-lg transition-all group" },
     h('div', { className: "relative h-56 overflow-hidden bg-slate-100" },
       h('img', {
         src: flat.image || `https://picsum.photos/seed/${flat.flatNo}/600/400`,
@@ -122,7 +125,7 @@ const FlatCard = ({ flat, onDelete, onUpdate }) => {
     h('div', { className: "p-6" },
       h('div', { className: "flex justify-between items-start mb-4" },
         h('div', { className: "flex-1 min-w-0" },
-          h('h3', { className: "text-xl font-bold text-slate-800 leading-tight truncate" }, `Unit ${String(flat.flatNo || '')}`),
+          h('h3', { className: "text-xl font-bold text-slate-800 truncate" }, `Unit ${String(flat.flatNo || '')}`),
           h('p', { className: "text-slate-500 font-medium flex items-center gap-1.5 mt-1" }, h(Tag, { size: 14, className: "text-blue-500" }), String(flat.type || ''))
         ),
         h('span', { className: "text-2xl font-black text-blue-700 flex items-center ml-2" },
@@ -131,10 +134,10 @@ const FlatCard = ({ flat, onDelete, onUpdate }) => {
         )
       ),
       h('div', { className: "grid grid-cols-2 gap-3 pt-2" },
-        h('button', { onClick: () => onUpdate(flat), className: `flex items-center justify-center gap-2 py-3 rounded-xl font-bold transition-all text-sm shadow-sm active:scale-95 ${isAvailable ? 'bg-slate-100 text-slate-700 hover:bg-slate-200' : 'bg-blue-600 text-white hover:bg-blue-700'}` },
+        h('button', { onClick: () => onUpdate(flat), className: `flex items-center justify-center gap-2 py-3 rounded-xl font-bold transition-all text-sm shadow-sm ${isAvailable ? 'bg-slate-100 text-slate-700 hover:bg-slate-200' : 'bg-blue-600 text-white hover:bg-blue-700'}` },
           h(RefreshCw, { size: 16 }), isAvailable ? 'Mark Sold' : 'Available'
         ),
-        h('button', { onClick: () => onDelete(id), className: "flex items-center justify-center gap-2 py-3 rounded-xl font-bold bg-red-50 text-red-600 hover:bg-red-100 transition-all text-sm shadow-sm active:scale-95" },
+        h('button', { onClick: () => onDelete(id), className: "flex items-center justify-center gap-2 py-3 rounded-xl font-bold bg-red-50 text-red-600 hover:bg-red-100 text-sm shadow-sm" },
           h(Trash2, { size: 16 }), " Delete"
         )
       )
@@ -147,35 +150,59 @@ const App = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [demoMode, setDemoMode] = useState(false);
 
-  const fetchFlats = useCallback(async () => {
+  const fetchFlats = useCallback(async (isManual = false) => {
+    if (demoMode && !isManual) return;
     setLoading(true);
     try {
       const { data } = await axios.get(API);
       setFlats(Array.isArray(data) ? data : []);
       setError(null);
+      setDemoMode(false);
     } catch (err) {
-      setError(`Backend connection failed. Please ensure your server is running at ${API}`);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+      if (demoMode) { setError(null); } 
+      else { setError(`Could not connect to backend at ${API}.`); }
+    } finally { setLoading(false); }
+  }, [demoMode]);
 
   useEffect(() => { fetchFlats(); }, [fetchFlats]);
 
+  const enableDemoMode = () => {
+    setFlats(MOCK_DATA);
+    setDemoMode(true);
+    setError(null);
+    setLoading(false);
+  };
+
   const handleAddFlat = async (newFlat) => {
-    try { await axios.post(API, newFlat); await fetchFlats(); } catch (err) { alert("Error adding flat record."); }
+    if (demoMode) {
+      setFlats(prev => [...prev, { ...newFlat, id: Date.now().toString() }]);
+      return;
+    }
+    try { await axios.post(API, newFlat); await fetchFlats(); } 
+    catch (err) { alert("Error adding flat."); }
   };
 
   const handleDeleteFlat = async (id) => {
-    if (!window.confirm("Delete this listing permanently?")) return;
-    try { await axios.delete(`${API}/${id}`); await fetchFlats(); } catch (err) { alert("Action failed."); }
+    if (!window.confirm("Delete permanently?")) return;
+    if (demoMode) {
+      setFlats(prev => prev.filter(f => (f.id || f._id) !== id));
+      return;
+    }
+    try { await axios.delete(`${API}/${id}`); await fetchFlats(); } 
+    catch (err) { alert("Action failed."); }
   };
 
   const handleUpdateStatus = async (flat) => {
-    const id = flat._id || flat.id; if (!id) return;
+    const id = flat._id || flat.id;
     const nextStatus = flat.status === FlatStatus.AVAILABLE ? FlatStatus.SOLD : FlatStatus.AVAILABLE;
-    try { await axios.put(`${API}/${id}`, { ...flat, status: nextStatus }); await fetchFlats(); } catch (err) { alert("Update failed."); }
+    if (demoMode) {
+      setFlats(prev => prev.map(f => (f.id || f._id) === id ? { ...f, status: nextStatus } : f));
+      return;
+    }
+    try { await axios.put(`${API}/${id}`, { ...flat, status: nextStatus }); await fetchFlats(); } 
+    catch (err) { alert("Update failed."); }
   };
 
   const filteredFlats = useMemo(() => {
@@ -186,8 +213,15 @@ const App = () => {
   }, [flats, searchTerm]);
 
   return h('div', { className: "min-h-screen bg-slate-50 flex flex-col pb-20" },
-    h(Header, { onRefresh: fetchFlats, loading, searchTerm, onSearchChange: setSearchTerm }),
+    h(Header, { onRefresh: () => fetchFlats(true), loading, searchTerm, onSearchChange: setSearchTerm, demoMode }),
     h('main', { className: "max-w-7xl w-full mx-auto px-4 pt-8" },
+      demoMode && h('div', { className: "bg-orange-50 border border-orange-100 p-4 rounded-2xl mb-8 flex items-center justify-between" },
+        h('div', { className: "flex items-center gap-3 text-orange-800" },
+          h(Info, { size: 20 }),
+          h('p', { className: "text-sm font-medium" }, "Running in Demo Mode. Changes are local and will reset on refresh.")
+        ),
+        h('button', { onClick: () => window.location.reload(), className: "text-xs font-bold text-orange-600 hover:underline" }, "Try Reconnecting")
+      ),
       h('div', { className: "grid grid-cols-1 md:grid-cols-3 gap-6 mb-10" },
         h('div', { className: "bg-blue-600 rounded-3xl p-8 text-white shadow-xl shadow-blue-200" },
           h('p', { className: "text-blue-100 text-xs font-bold uppercase tracking-widest mb-2" }, "Total Units"),
@@ -203,27 +237,27 @@ const App = () => {
         )
       ),
       h(FlatForm, { onAdd: handleAddFlat }),
-      h('div', { className: "flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8" },
-        h('div', { className: "flex items-center gap-3" },
-          h('h2', { className: "text-2xl font-bold text-slate-800" }, "Inventory Listing"),
-          h('span', { className: "bg-blue-100 text-blue-700 text-xs font-black py-1 px-3 rounded-full" }, `${filteredFlats.length} ITEMS`)
-        )
-      ),
       loading && flats.length === 0 ? 
         h('div', { className: "py-24 text-center" }, h(Loader2, { size: 56, className: "animate-spin text-blue-600 mx-auto" })) : 
         error ? 
-        h('div', { className: "bg-red-50 p-12 rounded-[2rem] text-center border border-red-100 max-w-2xl mx-auto" }, h(AlertCircle, { size: 32, className: "text-red-600 mx-auto mb-4" }), h('p', { className: "text-red-700 font-bold" }, String(error))) : 
+        h('div', { className: "bg-red-50 p-12 rounded-[2rem] text-center border border-red-100 max-w-2xl mx-auto shadow-sm" }, 
+          h(AlertCircle, { size: 32, className: "text-red-600 mx-auto mb-4" }), 
+          h('p', { className: "text-red-700 font-bold mb-2" }, "Backend Offline"),
+          h('p', { className: "text-red-600 text-sm opacity-80 mb-6" }, String(error)),
+          h('div', { className: "flex flex-col sm:flex-row gap-4 justify-center" },
+            h('button', { onClick: () => fetchFlats(true), className: "px-6 py-3 bg-red-600 text-white rounded-xl font-bold shadow-md" }, "Retry Connection"),
+            h('button', { onClick: enableDemoMode, className: "px-6 py-3 bg-white text-slate-700 border border-slate-200 rounded-xl font-bold shadow-sm" }, "Enter Demo Mode")
+          )
+        ) : 
         h('div', { className: "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" }, 
           filteredFlats.map(flat => h(FlatCard, { key: String(flat._id || flat.id), flat, onDelete: handleDeleteFlat, onUpdate: handleUpdateStatus }))
         )
     ),
     h('footer', { className: "mt-auto py-12 text-center" }, 
-      h('p', { className: "text-slate-400 text-[11px] font-black uppercase tracking-[0.3em]" }, `PRIME ESTATES © ${new Date().getFullYear()} • PROPERTY MANAGEMENT ENGINE`)
+      h('p', { className: "text-slate-400 text-[11px] font-black uppercase tracking-[0.3em]" }, `PRIME ESTATES © ${new Date().getFullYear()} • DASHBOARD ENGINE`)
     )
   );
 };
 
 const rootElement = document.getElementById('root');
-if (rootElement) {
-  createRoot(rootElement).render(h(App));
-}
+if (rootElement) { createRoot(rootElement).render(h(App)); }
