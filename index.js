@@ -7,7 +7,6 @@ import {
 } from 'lucide-react';
 
 const h = React.createElement;
-// Production API URL on Render
 const API = "https://prime-estates-api.onrender.com/api/flats";
 
 const FlatStatus = {
@@ -157,7 +156,6 @@ const App = () => {
     if (demoMode && !isManual) return;
     setLoading(true);
     try {
-      // Free tier Render services sleep. We use a 15s timeout to allow for wake-up time.
       const { data } = await axios.get(API, { timeout: 15000 });
       setFlats(Array.isArray(data) ? data : []);
       setError(null);
@@ -215,6 +213,42 @@ const App = () => {
     );
   }, [flats, searchTerm]);
 
+  const stats = [
+    h('div', { key: 'total', className: "bg-blue-600 rounded-3xl p-8 text-white shadow-xl shadow-blue-200" },
+      h('p', { className: "text-blue-100 text-xs font-bold uppercase tracking-widest mb-2" }, "Total Units"),
+      h('h2', { className: "text-5xl font-black" }, flats.length)
+    ),
+    h('div', { key: 'avail', className: "bg-white rounded-3xl p-8 border border-slate-200 shadow-sm" },
+      h('p', { className: "text-slate-500 text-xs font-bold uppercase tracking-widest mb-2" }, "Available"),
+      h('h2', { className: "text-5xl font-black text-green-600" }, flats.filter(f => f.status === FlatStatus.AVAILABLE).length)
+    ),
+    h('div', { key: 'sold', className: "bg-white rounded-3xl p-8 border border-slate-200 shadow-sm" },
+      h('p', { className: "text-slate-500 text-xs font-bold uppercase tracking-widest mb-2" }, "Sold"),
+      h('h2', { className: "text-5xl font-black text-red-500" }, flats.filter(f => f.status === FlatStatus.SOLD).length)
+    )
+  ];
+
+  const mainContent = loading && flats.length === 0 ? 
+    h('div', { className: "py-24 text-center" }, h(Loader2, { size: 56, className: "animate-spin text-blue-600 mx-auto" })) : 
+    error ? 
+    h('div', { className: "bg-white p-12 rounded-[2rem] text-center border border-slate-200 max-w-2xl mx-auto shadow-sm" }, 
+      h(AlertCircle, { size: 48, className: "text-orange-500 mx-auto mb-4" }), 
+      h('p', { className: "text-slate-800 font-bold text-xl mb-2" }, "API Is Waking Up"),
+      h('p', { className: "text-slate-500 text-sm mb-8 leading-relaxed" }, String(error)),
+      h('div', { className: "flex flex-col sm:flex-row gap-4 justify-center" },
+        h('button', { onClick: () => fetchFlats(true), className: "px-8 py-3 bg-blue-600 text-white rounded-xl font-bold shadow-lg shadow-blue-100 hover:bg-blue-700 transition-all active:scale-95" }, "Retry Connection"),
+        h('button', { onClick: enableDemoMode, className: "px-8 py-3 bg-slate-50 text-slate-700 border border-slate-200 rounded-xl font-bold hover:bg-slate-100 transition-all active:scale-95" }, "Explore Demo Mode")
+      )
+    ) : 
+    h('div', { className: "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" }, 
+      filteredFlats.map(flat => h(FlatCard, { 
+        key: String(flat._id || flat.id), 
+        flat, 
+        onDelete: handleDeleteFlat, 
+        onUpdate: handleUpdateStatus 
+      }))
+    );
+
   return h('div', { className: "min-h-screen bg-slate-50 flex flex-col pb-20" },
     h(Header, { onRefresh: () => fetchFlats(true), loading, searchTerm, onSearchChange: setSearchTerm, demoMode }),
     h('main', { className: "max-w-7xl w-full mx-auto px-4 pt-8" },
@@ -225,36 +259,9 @@ const App = () => {
         ),
         h('button', { onClick: () => window.location.reload(), className: "text-xs font-bold text-orange-600 hover:underline" }, "Try Reconnect")
       ),
-      h('div', { className: "grid grid-cols-1 md:grid-cols-3 gap-6 mb-10" },
-        h('div', { className: "bg-blue-600 rounded-3xl p-8 text-white shadow-xl shadow-blue-200" },
-          h('p', { className: "text-blue-100 text-xs font-bold uppercase tracking-widest mb-2" }, "Total Units"),
-          h('h2', { className: "text-5xl font-black" }, flats.length)
-        ),
-        h('div', { className: "bg-white rounded-3xl p-8 border border-slate-200 shadow-sm" },
-          h('p', { className: "text-slate-500 text-xs font-bold uppercase tracking-widest mb-2" }, "Available"),
-          h('h2', { className: "text-5xl font-black text-green-600" }, flats.filter(f => f.status === FlatStatus.AVAILABLE).length)
-        ),
-        h('div', { className: "bg-white rounded-3xl p-8 border border-slate-200 shadow-sm" },
-          h('p', { className: "text-slate-500 text-xs font-bold uppercase tracking-widest mb-2" }, "Sold"),
-          h('h2', { className: "text-5xl font-black text-red-500" }, flats.filter(f => f.status === FlatStatus.SOLD).length)
-        )
-      ),
+      h('div', { className: "grid grid-cols-1 md:grid-cols-3 gap-6 mb-10" }, ...stats),
       h(FlatForm, { onAdd: handleAddFlat }),
-      loading && flats.length === 0 ? 
-        h('div', { className: "py-24 text-center" }, h(Loader2, { size: 56, className: "animate-spin text-blue-600 mx-auto" })) : 
-        error ? 
-        h('div', { className: "bg-white p-12 rounded-[2rem] text-center border border-slate-200 max-w-2xl mx-auto shadow-sm" }, 
-          h(AlertCircle, { size: 48, className: "text-orange-500 mx-auto mb-4" }), 
-          h('p', { className: "text-slate-800 font-bold text-xl mb-2" }, "API Is Waking Up"),
-          h('p', { className: "text-slate-500 text-sm mb-8 leading-relaxed" }, String(error)),
-          h('div', { className: "flex flex-col sm:flex-row gap-4 justify-center" },
-            h('button', { onClick: () => fetchFlats(true), className: "px-8 py-3 bg-blue-600 text-white rounded-xl font-bold shadow-lg shadow-blue-100 hover:bg-blue-700 transition-all active:scale-95" }, "Retry Connection"),
-            h('button', { onClick: enableDemoMode, className: "px-8 py-3 bg-slate-50 text-slate-700 border border-slate-200 rounded-xl font-bold hover:bg-slate-100 transition-all active:scale-95" }, "Explore Demo Mode")
-          )
-        ) : 
-        h('div', { className: "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" }, 
-          filteredFlats.map(flat => h(FlatCard, { key: String(flat._id || flat.id), flat, onDelete: handleDeleteFlat, onUpdate: handleUpdateStatus }))
-        )
+      mainContent
     ),
     h('footer', { className: "mt-auto py-12 text-center" }, 
       h('p', { className: "text-slate-400 text-[11px] font-black uppercase tracking-[0.3em]" }, `PRIME ESTATES © ${new Date().getFullYear()} • DASHBOARD ENGINE`)
@@ -263,4 +270,6 @@ const App = () => {
 };
 
 const rootElement = document.getElementById('root');
-if (rootElement) { createRoot(rootElement).render(h(App)); }
+if (rootElement) { 
+  createRoot(rootElement).render(h(App, null)); 
+}
